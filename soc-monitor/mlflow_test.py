@@ -14,6 +14,7 @@ import mlflow
 import mlflow.sklearn
 
 # Settings
+MODEL_DIR = pathlib.Path('models/')
 DATA_DIR = pathlib.Path('data/')
 SEED = 43
 
@@ -29,8 +30,8 @@ def eval_metrics(actual, pred):
     return rmse, mae, r2
 
 # Main function
-if __name__ == "__main__":
-    warnings.filterwarnings("ignore")
+if __name__ == '__main__':
+    warnings.filterwarnings('ignore')
     np.random.seed(SEED)
 
     # Get training data
@@ -38,13 +39,14 @@ if __name__ == "__main__":
         train_data = np.load(DATA_DIR.joinpath('train_no_log.npy'))
         test_data = np.load(DATA_DIR.joinpath('test_no_log.npy'))
     except Exception as e:
-        logger.exception(f"Unable to load data. Error: {e}")
+        logger.exception(f'Unable to load data. Error: {e}')
 
     # Separate targets and features
     x_train = train_data[:, 1:]
-    y_train = train_data[:, 0]
+    y_train = train_data[:, 0].reshape(-1, 1)
     x_test = test_data[:, 1:]
-    y_test = test_data[:, 0]
+    y_test = test_data[:, 0].reshape(-1, 1)
+
 
     # Normalize X
     scaler_x = MinMaxScaler()
@@ -55,7 +57,7 @@ if __name__ == "__main__":
     # Normalize y
     scaler_y = MinMaxScaler()
     scaler_y.fit(y_train.reshape(-1, 1))
-    y_train = scaler_y.transform(y_train.reshape(-1, 1)).flatten()
+    y_train = scaler_y.transform(y_train)
 
     # Command line arguments
     n_estimators = int(sys.argv[1]) if len(sys.argv) > 1 else 100
@@ -76,26 +78,31 @@ if __name__ == "__main__":
         (rmse, mae, r2) = eval_metrics(y_test, y_pred)
 
         # Print metrics
-        print(f"Random Forest model: (n_estimators={n_estimators}")
-        print(f"  RMSE: {rmse}")
-        print(f"  MAE: {mae}")
-        print(f"  R2: {r2}")
+        print(f'Random Forest model: (n_estimators={n_estimators}')
+        print(f'  RMSE: {rmse}')
+        print(f'  MAE: {mae}')
+        print(f'  R2: {r2}')
 
         # Log params and metrics
-        mlflow.log_param("n_estimators", n_estimators)
-        mlflow.log_metric("rmse", rmse)
-        mlflow.log_metric("r2", r2)
-        mlflow.log_metric("mae", mae)
+        mlflow.log_param('n_estimators', n_estimators)
+        mlflow.log_metric('rmse', rmse)
+        mlflow.log_metric('r2', r2)
+        mlflow.log_metric('mae', mae)
 
         tracking_url_type_store = urlparse(mlflow.get_tracking_uri()).scheme
 
         # Model registry does not work with file store
-        if tracking_url_type_store != "file":
+        if tracking_url_type_store != 'file':
 
             # Register the model
             # There are other ways to use the Model Registry, which depends on the use case,
             # please refer to the doc for more information:
             # https://mlflow.org/docs/latest/model-registry.html#api-workflow
-            mlflow.sklearn.log_model(rf, "model", registered_model_name="RandomForestSOC")
+            mlflow.sklearn.log_model(rf, 'model', registered_model_name='RandomForestSOC')
         else:
-            mlflow.sklearn.log_model(rf, "model")
+            mlflow.sklearn.log_model(rf, 'model')
+
+        model_name = 'rf_1'
+        # Save model to disk
+        mlflow.sklearn.save_model(rf, MODEL_DIR.joinpath(f'{model_name}'),
+        serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE)

@@ -1,0 +1,15 @@
+artifact_uri: file:///home/peterp/GDrive/soc-monitor/soc-monitor/mlruns/0/f416d16f908c40f7bee8303e19d1db51/artifacts
+end_time: 1615281773521
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+name: ''
+run_id: f416d16f908c40f7bee8303e19d1db51
+run_uuid: f416d16f908c40f7bee8303e19d1db51
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1615281762507
+status: 3
+tags: []
+user_id: peterp
